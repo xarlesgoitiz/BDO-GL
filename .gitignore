@@ -1,0 +1,23 @@
+# Entorno virtual
+venv/
+env/
+
+# Archivos de compilación y cachés
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos de configuración del sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar el archivo .env
+.env
+
+# Ignorar el archivo de credenciales
+credentials.json
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp

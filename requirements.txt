@@ -1,0 +1,8 @@
+discord
+python-dotenv
+paddlepaddle
+setuptools
+paddleocr
+Pillow
+gspread
+oauth2client
