@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
-from bot_ocr_reader import *
+from bot_ocr_readerV1 import *
+from bot_ocr_readerV2 import *
 import time
 from PIL import Image, ImageEnhance  # Asegúrate de que esto esté incluido
 
@@ -21,7 +22,7 @@ token = os.getenv('DISCORD_TOKEN')
 #print(f'Token: {token}')
 
 if token is None:
-    print("Error: No se pudo cargar el token. Asegúrate de que el archivo .env esté configurado correctamente.")
+    print('Error: No se pudo cargar el token. Asegúrate de que el archivo .env esté configurado correctamente.')
 else:
     intents = discord.Intents.all()
     intents.messages = True
@@ -90,75 +91,17 @@ else:
         global allowed_channel_id
         allowed_channel_id = None  # Desvincula el canal
         await ctx.send('El bot ahora responderá en todos los canales.')
-    
+
     @bot.command()
     async def glr(ctx):
-        if allowed_channel_id is not None and ctx.channel.id != allowed_channel_id:
-            return  # Ignora comandos fuera del canal permitido
+        template_path = 'resources/templateGL_V2.png'
+        await procesar_y_guardar_imagen(ctx, template_path, procesar_imagen)
 
-        # Verifica si hay archivos adjuntos en el mensaje
-        if ctx.message.attachments:
-            # Toma el primer archivo adjunto
-            attachment = ctx.message.attachments[0]
+    @bot.command()
+    async def glrV2(ctx):
+        template_path = 'resources/templateGL_V2.png'
+        await procesar_y_guardar_imagen(ctx, template_path, procesar_imagenV3)
 
-            # Genera un nombre único para el archivo
-            timestamp = int(time.time())
-            nombre_archivo = f"{timestamp}_{attachment.filename}"
-
-            og_img_path = os.path.join('temp', 'img', nombre_archivo)  # ruta img sin editar
-
-            # Asegurarse de que la carpeta 'temp/img' exista
-            os.makedirs(os.path.dirname(og_img_path), exist_ok=True)
-
-            # Guarda el archivo adjunto localmente en la carpeta 'temp/img'
-            await attachment.save(og_img_path)
-
-            ed_img_path = os.path.join('temp', 'edited_img', nombre_archivo)  # ruta edited_img
-
-            # Asegurarse de que la carpeta 'temp/edited_img' exista
-            os.makedirs(os.path.dirname(ed_img_path), exist_ok=True)
-
-            # Cargar la imagen para procesarla
-            imagen = Image.open(og_img_path)  # Abre la imagen original
-
-            # Crear un objeto para mejorar el contraste
-            enhancer_contraste = ImageEnhance.Contrast(imagen)
-
-            # Ajustar el contraste
-            contraste_ajustado = enhancer_contraste.enhance(1.0)  # Ajusta el valor según sea necesario
-
-            # Crear un objeto para mejorar la saturación
-            enhancer_saturacion = ImageEnhance.Color(contraste_ajustado)
-
-            # Ajustar la saturación
-            saturacion_ajustada = enhancer_saturacion.enhance(1.6)  # Aumentar la saturación en un 30% (ajusta según sea necesario)
-
-            # Cargar la plantilla
-            template_path = 'resources/templateGL_V2.png'
-            plantilla = Image.open(template_path)
-
-            # Redimensionar la plantilla si es necesario para que coincida con el tamaño de la imagen
-            plantilla = plantilla.resize(contraste_ajustado.size, Image.LANCZOS)
-
-            # Superponer la plantilla sobre la imagen
-            imagen_final = Image.alpha_composite(contraste_ajustado.convert("RGBA"), plantilla.convert("RGBA"))
-
-            # Guardar la imagen editada
-            imagen_final.save(ed_img_path)
-
-            # Procesar la imagen localmente (esto puede ser otra función que hayas definido)
-            response = procesar_imagen(ed_img_path)
-
-            # Envía la respuesta de vuelta al canal
-            await ctx.send(response)
-
-            # Limpia la imagen después de procesarla si es necesario
-            os.remove(og_img_path)  # Descomentar si deseas eliminar la imagen original
-            os.remove(ed_img_path)   # Descomentar si deseas eliminar la imagen editada
-        else:
-            await ctx.send("Por favor, adjunta una imagen al comando.")
-    
-    
     @bot.command()
     async def share_sheet(ctx, email: str):
         """Comparte la hoja de cálculo con el correo electrónico proporcionado y elimina el mensaje del comando."""
@@ -181,6 +124,61 @@ else:
         sheet_url = 'https://docs.google.com/spreadsheets/d/1aDwM4ZJM57Mj83VKbgwdjp2bZc8M9VeN2BYxJ8C4AGc'
         await ctx.send(f'url para el acceso al Sheet de Guild League:({sheet_url})')
         
+    async def procesar_y_guardar_imagen(ctx, template_path, procesar_func):
+        if allowed_channel_id is not None and ctx.channel.id != allowed_channel_id:
+            return  # Ignora comandos fuera del canal permitido
 
+        # Verifica si hay archivos adjuntos en el mensaje
+        if ctx.message.attachments:
+            # Toma el primer archivo adjunto
+            attachment = ctx.message.attachments[0]
+
+            # Genera un nombre único para el archivo
+            timestamp = int(time.time())
+            nombre_archivo = f"{timestamp}_{attachment.filename}"
+
+            og_img_path = os.path.join('temp', 'img', nombre_archivo)  # ruta img sin editar
+            ed_img_path = os.path.join('temp', 'edited_img', nombre_archivo)  # ruta edited_img
+
+            # Asegurarse de que las carpetas existan
+            os.makedirs(os.path.dirname(og_img_path), exist_ok=True)
+            os.makedirs(os.path.dirname(ed_img_path), exist_ok=True)
+
+            # Guarda el archivo adjunto localmente en la carpeta 'temp/img'
+            await attachment.save(og_img_path)
+
+            # Cargar la imagen para procesarla
+            imagen = Image.open(og_img_path)  # Abre la imagen original
+
+            # Crear y aplicar mejoras
+            enhancer_contraste = ImageEnhance.Contrast(imagen)
+            contraste_ajustado = enhancer_contraste.enhance(1.0)  # Ajusta el valor según sea necesario
+
+            enhancer_saturacion = ImageEnhance.Color(contraste_ajustado)
+            saturacion_ajustada = enhancer_saturacion.enhance(1.6)  # Ajusta según sea necesario
+
+            # Cargar y redimensionar la plantilla
+            plantilla = Image.open(template_path)
+            plantilla = plantilla.resize(contraste_ajustado.size, Image.LANCZOS)
+
+            # Superponer la plantilla sobre la imagen
+            imagen_final = Image.alpha_composite(saturacion_ajustada.convert("RGBA"), plantilla.convert("RGBA"))
+
+            # Guardar la imagen editada
+            imagen_final.save(ed_img_path)
+
+            # Procesar la imagen localmente usando la función pasada como argumento
+            response = procesar_func(ed_img_path)
+
+            # Envía la respuesta de vuelta al canal
+            await ctx.send(response)
+
+            # Limpia la imagen después de procesarla si es necesario
+            os.remove(og_img_path)  # Descomentar si deseas eliminar la imagen original
+            #os.remove(ed_img_path)   # Descomentar si deseas eliminar la imagen editada
+        else:
+            await ctx.send("Por favor, adjunta una imagen al comando.")
+
+    #run
     bot.run(token)
 
