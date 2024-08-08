@@ -6,3 +6,4 @@ paddleocr
 Pillow
 gspread
 oauth2client
+flask
