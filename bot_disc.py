@@ -17,7 +17,7 @@ if __name__ == '__main__':
     from dotenv import load_dotenv
     import os
     from bot_ocr_readerV1 import *
-    from bot_ocr_readerV2 import *
+    #from bot_ocr_readerV2 import *
     import time
     from PIL import Image, ImageEnhance  # Asegúrate de que esto esté incluido
 
@@ -110,12 +110,12 @@ if __name__ == '__main__':
         async def glr(ctx):
             template_path = 'resources/templateGL_V2.png'
             await procesar_y_guardar_imagen(ctx, template_path, procesar_imagen)
-
+        """
         @bot.command()
         async def glrV2(ctx):
             template_path = 'resources/templateGL_V2.png'
             await procesar_y_guardar_imagen(ctx, template_path, procesar_imagenV3)
-
+        """
         @bot.command()
         async def share_sheet(ctx, email: str):
             """Comparte la hoja de cálculo con el correo electrónico proporcionado y elimina el mensaje del comando."""
